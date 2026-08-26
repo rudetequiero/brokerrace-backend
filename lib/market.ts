@@ -34,14 +34,18 @@ function fmtMoney(cents: number): string {
  * the ticker — mirrors the "Today" rolling-window concept from the design brief.
  */
 export async function getLeaderboard(category?: string): Promise<LeaderboardRow[]> {
+  // current_bid_cents > 0 excludes companies that were created (POST /api/companies)
+  // but never completed a payment — a listing must never appear on the public
+  // leaderboard "for free" while its first Stripe Checkout is pending/abandoned.
   const { rows: companies } = category && category !== "GLOBAL"
     ? await sql<CompanyRow>`
         select * from companies
-        where category = ${category}
+        where category = ${category} and current_bid_cents > 0
         order by current_bid_cents desc, created_at asc
       `
     : await sql<CompanyRow>`
         select * from companies
+        where current_bid_cents > 0
         order by current_bid_cents desc, created_at asc
       `;
 
@@ -73,6 +77,7 @@ export async function getLeaderboard(category?: string): Promise<LeaderboardRow[
       clicks: centsToNumber(c.total_clicks),
       initials: c.initials ?? c.name.slice(0, 3).toUpperCase(),
       logoUrl: c.logo_url ?? null,
+      website: c.website ?? null,
     };
   });
 }
