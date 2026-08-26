@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
 import { getLeaderboard } from "@/lib/market";
 import { sql } from "@/lib/db";
+import { corsJson, corsPreflight } from "@/lib/cors";
 
 export const dynamic = "force-dynamic"; // always read fresh data, never statically cache
 
@@ -25,7 +25,7 @@ export async function GET(request: Request) {
     `,
   ]);
 
-  return NextResponse.json({
+  return corsJson({
     category: category ?? "GLOBAL",
     rows,
     activity: recentActivity.rows,
@@ -35,4 +35,8 @@ export async function GET(request: Request) {
       topBidCents: rows[0]?.bidCents ?? 0,
     },
   });
+}
+
+export async function OPTIONS() {
+  return corsPreflight();
 }
