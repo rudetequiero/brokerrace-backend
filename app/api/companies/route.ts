@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
+import { corsJson, corsPreflight } from "@/lib/cors";
 
 /**
  * POST /api/companies
@@ -16,17 +16,17 @@ import { sql } from "@/lib/db";
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   if (!body) {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return corsJson({ error: "Invalid JSON body" }, { status: 400 });
   }
 
   const { name, category, categoryLabel, country, website } = body as Record<string, unknown>;
 
   if (typeof name !== "string" || name.trim().length < 2) {
-    return NextResponse.json({ error: "`name` is required" }, { status: 400 });
+    return corsJson({ error: "`name` is required" }, { status: 400 });
   }
   const ALLOWED_CATEGORIES = ["CRYPTO", "FOREX", "STOCKS", "CFD", "PROP", "FINTECH"];
   if (typeof category !== "string" || !ALLOWED_CATEGORIES.includes(category)) {
-    return NextResponse.json(
+    return corsJson(
       { error: `\`category\` must be one of: ${ALLOWED_CATEGORIES.join(", ")}` },
       { status: 400 }
     );
@@ -54,18 +54,22 @@ export async function POST(request: Request) {
       )
       returning id, slug
     `;
-    return NextResponse.json({ company: rows[0] }, { status: 201 });
+    return corsJson({ company: rows[0] }, { status: 201 });
   } catch (err: any) {
     if (err?.code === "23505") {
       // unique_violation on slug
-      return NextResponse.json(
+      return corsJson(
         { error: "A company with a very similar name is already listed. Try a more specific name." },
         { status: 409 }
       );
     }
     console.error("POST /api/companies failed", err);
-    return NextResponse.json({ error: "Could not create listing" }, { status: 500 });
+    return corsJson({ error: "Could not create listing" }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return corsPreflight();
 }
 
 function slugify(name: string): string {
