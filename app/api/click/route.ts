@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
+import { corsJson, corsNoContent, corsPreflight } from "@/lib/cors";
 
 /**
  * POST /api/click  { companyId: string }
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const companyId = body && typeof body.companyId === "string" ? body.companyId : null;
   if (!companyId) {
-    return NextResponse.json({ error: "`companyId` is required" }, { status: 400 });
+    return corsJson({ error: "`companyId` is required" }, { status: 400 });
   }
 
   await sql`
@@ -25,5 +25,9 @@ export async function POST(request: Request) {
     where id = ${companyId}
   `;
 
-  return new NextResponse(null, { status: 204 });
+  return corsNoContent();
+}
+
+export async function OPTIONS() {
+  return corsPreflight();
 }
