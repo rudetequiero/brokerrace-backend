@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     return corsJson({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { name, category, categoryLabel, country, website } = body as Record<string, unknown>;
+  const { name, category, categoryLabel, country, website, logoUrl } = body as Record<string, unknown>;
 
   if (typeof name !== "string" || name.trim().length < 2) {
     return corsJson({ error: "`name` is required" }, { status: 400 });
@@ -32,6 +32,21 @@ export async function POST(request: Request) {
     );
   }
 
+  // Optional: a direct image URL (logo) shown on the podium and in the leaderboard row
+  // instead of the plain-text initials avatar. Not required — if it's missing or not a
+  // valid http(s) URL, we just fall back to initials (handled entirely on read).
+  let validatedLogoUrl: string | null = null;
+  if (typeof logoUrl === "string" && logoUrl.trim().length > 0) {
+    try {
+      const u = new URL(logoUrl.trim());
+      if (u.protocol === "http:" || u.protocol === "https:") {
+        validatedLogoUrl = logoUrl.trim();
+      }
+    } catch {
+      // invalid URL string — silently ignored, falls back to initials
+    }
+  }
+
   const slug = slugify(name);
   const initials = name
     .split(/\s+/)
@@ -42,7 +57,7 @@ export async function POST(request: Request) {
 
   try {
     const { rows } = await sql`
-      insert into companies (slug, name, category, category_label, country, website, initials)
+      insert into companies (slug, name, category, category_label, country, website, initials, logo_url)
       values (
         ${slug},
         ${name.trim()},
@@ -50,7 +65,8 @@ export async function POST(request: Request) {
         ${typeof categoryLabel === "string" ? categoryLabel : category},
         ${typeof country === "string" ? country : null},
         ${typeof website === "string" ? website : null},
-        ${initials}
+        ${initials},
+        ${validatedLogoUrl}
       )
       returning id, slug
     `;
