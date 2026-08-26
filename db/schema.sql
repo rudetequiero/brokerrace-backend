@@ -13,6 +13,7 @@ create table if not exists companies (
   country             text,
   website             text,
   initials             text,                                 -- short avatar label, e.g. "VTX"
+  logo_url             text,                                 -- direct image URL shown on the podium + table row, in place of initials
   verification_level  text not null default 'UNVERIFIED',   -- UNVERIFIED | IDENTITY_VERIFIED | VERIFIED_COMPANY | VERIFIED_BROKER | VERIFIED_EXCHANGE | LICENSE_VERIFIED
   current_bid_cents   bigint not null default 0,             -- cumulative confirmed bid (source of truth for rank)
   total_clicks        bigint not null default 0,
