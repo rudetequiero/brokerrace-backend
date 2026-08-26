@@ -72,6 +72,7 @@ export async function getLeaderboard(category?: string): Promise<LeaderboardRow[
       deltaLabel: deltaCents > 0 ? `+${fmtMoney(deltaCents)}` : deltaCents < 0 ? fmtMoney(deltaCents) : "—  $0",
       clicks: centsToNumber(c.total_clicks),
       initials: c.initials ?? c.name.slice(0, 3).toUpperCase(),
+      logoUrl: c.logo_url ?? null,
     };
   });
 }
