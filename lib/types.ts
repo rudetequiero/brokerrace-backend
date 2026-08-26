@@ -25,6 +25,7 @@ export interface CompanyRow {
   country: string | null;
   website: string | null;
   initials: string | null;
+  logo_url: string | null;
   verification_level: VerificationLevel;
   current_bid_cents: string; // bigint comes back as string from pg
   total_clicks: string;
@@ -48,4 +49,5 @@ export interface LeaderboardRow {
   deltaLabel: string;
   clicks: number;
   initials: string;
+  logoUrl: string | null;
 }
