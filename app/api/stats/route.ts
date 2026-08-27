@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic"; // always read fresh counts, never stati
 export async function GET() {
     const { rows } = await sql<{ total_visitors: string; live_now: string }>`
         select
-              count(*)::text as total_visitors,
+              coalesce(sum(visit_count), 0)::text as total_visitors,
                     count(*) filter (where last_seen >= now() - interval '90 seconds')::text as live_now
                         from visitor_sessions
                           `;
