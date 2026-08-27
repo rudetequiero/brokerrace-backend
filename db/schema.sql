@@ -62,3 +62,33 @@ create table if not exists activity_log (
 );
 
 create index if not exists idx_activity_created_at on activity_log (created_at desc);
+
+
+  -- Audit log for /api/click - every click-through attempt (counted or not), so anomalous
+-- spikes can be reviewed later. See db/migrations/001_click_events.sql for the standalone
+-- migration; this copy just keeps schema.sql a complete picture of the current schema.
+create table if not exists click_events (
+    id          uuid primary key default gen_random_uuid(),
+    company_id  uuid references companies(id) on delete cascade,
+    ip_hash     text,
+    user_agent  text,
+    referrer    text,
+    counted     boolean not null default false,
+    reason      text not null default 'ok',
+    created_at  timestamptz not null default now()
+  );
+
+create index if not exists idx_click_events_company_created on click_events (company_id, created_at desc);
+create index if not exists idx_click_events_ip_created on click_events (ip_hash, created_at desc);
+
+-- Powers the "N viewing now - M total visitors" counter. One row per browser (client-
+-- generated session id), upserted on every heartbeat - not a log table, so counts stay
+-- cheap forever with no pruning job. See db/migrations/002_visitor_sessions.sql.
+create table if not exists visitor_sessions (
+    session_id  text primary key,
+    first_seen  timestamptz not null default now(),
+    last_seen   timestamptz not null default now(),
+    visit_count integer not null default 1
+  );
+
+create index if not exists idx_visitor_sessions_last_seen on visitor_sessions (last_seen desc);
